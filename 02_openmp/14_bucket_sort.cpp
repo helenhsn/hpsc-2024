@@ -3,12 +3,11 @@
 #include <vector>
 #include <omp.h>
 
-#define THRESHOLD 1024
 
-void bucket_sort_par(int n, int range)
+void bucket_sort_par(int n, int range, int THRESHOLD)
 {
   omp_set_num_threads(std::min(range, THRESHOLD));
-  printf("n threads = %i", omp_get_max_threads());
+  // printf("n threads = %i", omp_get_max_threads());
   std::vector<int> key(n);
   
   for (int i=0; i<n; i++) {
@@ -53,10 +52,10 @@ void bucket_sort_par(int n, int range)
 
   #pragma omp parallel for
   for (int i=0; i<range; i++) {
-    int j = offset[i];
-    
-    for (int k=0; k<bucket[i]; k++) {
-      key[j++] = i;
+    int start = (i==0) ? 0 : offset[i-1];
+
+    for (int k=start; k<offset[i]; k++) {
+      key[k] = i;
     }
   }
 
@@ -106,11 +105,12 @@ void bucket_sort(int n, int range)
 int main() {
   std::vector<int> n_values = {50, 500, 1000, 10000, 1000000, 100000000, 500000000};
   std::vector<int> range_values = {5, 50, 100, 1000, 50000, 100000, 500000};
+  std::vector<int> thresholds = {128, 128, 128, 256, 512, 1024, 2048};
 
   for (int i=0; i<n_values.size(); i++)
   {
     double start = omp_get_wtime();
-    bucket_sort_par(n_values[i], range_values[i]);
+    bucket_sort_par(n_values[i], range_values[i], thresholds[i]);
     double end_par = omp_get_wtime() - start;
 
     start = omp_get_wtime();
