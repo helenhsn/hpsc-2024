@@ -105,7 +105,7 @@ void bucket_sort(int n, int range)
 int main() {
   std::vector<int> n_values = {50, 500, 1000, 10000, 1000000, 100000000, 500000000};
   std::vector<int> range_values = {5, 50, 100, 1000, 50000, 100000, 500000};
-  std::vector<int> thresholds = {128, 128, 128, 256, 512, 1024, 2048};
+  std::vector<int> thresholds = {32, 32, 32, 32, 32, 256, 1024};
 
   for (int i=0; i<n_values.size(); i++)
   {
