@@ -31,21 +31,14 @@ int main() {
       }
     }
 
-    __m512 xvec = _mm512_load_ps(x);
-    __m512 xival_vec = _mm512_set1_ps(x[i]);
-    __m512 minusx_vec = _mm512_sub_ps(xival_vec, xvec);
+    __m512 minusx_vec = _mm512_sub_ps(_mm512_set1_ps(x[i]), _mm512_load_ps(x)); // minusx_vec = (x[i]-x[j]) for all j=0..N-1
     
-    __m512 yvec = _mm512_load_ps(y);
-    __m512 yival_vec = _mm512_set1_ps(y[i]);
-    __m512 minusy_vec = _mm512_sub_ps(yival_vec, yvec);
-
-    __m512 jvec = _mm512_load_ps(range);
-    __m512 ival_vec = _mm512_set1_ps(i);
+    __m512 minusy_vec = _mm512_sub_ps(_mm512_set1_ps(y[i]), _mm512_load_ps(y)); // minusy_vec = (y[i]-y[j]) for all j=0..N-1
   
     // if condition
-    __m512 minus_vec = _mm512_sub_ps(ival_vec, jvec);
+    __m512 minusij_vec = _mm512_sub_ps(_mm512_set1_ps(i), _mm512_load_ps(range)); // minusij_vec = (i - j) for all j=0..N-1
     __m512 zeros = _mm512_set1_ps(0);
-    __mmask16 mask_if = _mm512_cmp_ps_mask(minus_vec, zeros, _MM_CMPINT_NE);
+    __mmask16 mask_if = _mm512_cmp_ps_mask(minusij_vec, zeros, _MM_CMPINT_NE);
 
     __m512 rxvec = _mm512_mask_blend_ps(mask_if, zeros, minusx_vec);
     __m512 rxsqvec = _mm512_mul_ps(rxvec, rxvec);
