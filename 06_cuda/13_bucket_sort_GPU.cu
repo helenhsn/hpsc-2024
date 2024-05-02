@@ -139,8 +139,6 @@ int main() {
   int *bucket; 
   int *offset; 
 
-  // int blockSize = (range+range%32);
-
   cudaMallocManaged(&key, n*sizeof(int));
   cudaMallocManaged(&bucket, range*sizeof(int));
   cudaMallocManaged(&offset, range*sizeof(int));
@@ -164,10 +162,6 @@ int main() {
 
   float CPU = (std::chrono::steady_clock::now() - start).count();
 
-  // printf("output cpu = \n");
-  // print_vec(outputCPU, n);
-  // printf("\n");
- 
 
   start = std::chrono::steady_clock::now();
 
@@ -178,16 +172,11 @@ int main() {
   // printf("\nTASK 1 GPU = %f", (float) (std::chrono::steady_clock::now() - start).count());
 
 
-  // printf("\n bucket buff = \n");
-  // print_vec(bucket, range);
   // start = std::chrono::steady_clock::now();
   
   fill_offset<<<1, range, 2*range>>>(range, bucket, offset);
   cudaDeviceSynchronize();
 
-
-  // printf("\n offset buff = \n");
-  // print_vec(offset, range);
 
   fill_key<<<(range+31)/32, 32>>>(range, bucket, offset, key);
   cudaDeviceSynchronize();
@@ -201,6 +190,6 @@ int main() {
 
   float GPU = (std::chrono::steady_clock::now() - start).count();
 
-  printf("Time taken: \n >> CPU: %f  \n >> GPU: %f",  CPU, GPU);
+  printf("Time taken: for array of size = %i and  \n >> CPU: %f  \n >> GPU: %f",  CPU, GPU);
 
 }
