@@ -160,7 +160,7 @@ int main() {
   fill_bucket<<<(n+range-1)/range, range, range*sizeof(int)>>>(n, bucket, key);
   cudaDeviceSynchronize();
   
-  fill_offset<<<1, range, 2*range>>>(range, bucket, offset);
+  fill_offset<<<1, range, 2*range*sizeof(int)>>>(range, bucket, offset);
   cudaDeviceSynchronize();
 
 
