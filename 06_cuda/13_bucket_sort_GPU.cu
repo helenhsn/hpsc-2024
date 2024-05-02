@@ -190,6 +190,6 @@ int main() {
 
   float GPU = (std::chrono::steady_clock::now() - start).count();
 
-  printf("Time taken: for array of size = %i and  \n >> CPU: %f  \n >> GPU: %f",  CPU, GPU);
+  printf("Time taken: for array of size = %i with range = %i  \n >> CPU: %f  \n >> GPU: %f", n, range,  CPU, GPU);
 
 }
