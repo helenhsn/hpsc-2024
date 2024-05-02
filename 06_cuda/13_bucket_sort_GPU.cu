@@ -90,8 +90,6 @@ void bucket_sort_CPU(int *key, int *output, int n, int range)
 {
   std::vector<int> bucket(range);
 
-  // auto start = std::chrono::steady_clock::now();
-
   for (int i=0; i<range; i++) {
     bucket[i] = 0;
   }
@@ -99,17 +97,11 @@ void bucket_sort_CPU(int *key, int *output, int n, int range)
     bucket[key[i]]++;
   }
 
-  // printf("\nTASK 1 CPU = %f", (float) (std::chrono::steady_clock::now() - start).count());
-
-  // start = std::chrono::steady_clock::now();
-
   for (int i=0, j=0; i<range; i++) {
     for (; bucket[i]>0; bucket[i]--) {
       output[j++] = i;
     }
   }
-
-  // printf("\nTASK 2 CPU = %f", (float) (std::chrono::steady_clock::now() - start).count());
 
 
 }
@@ -128,7 +120,6 @@ void print_vec(int *vec, int size)
 
 int main() {
   const int n = 500000;
-
 
   // BEWARE !!! 
   // range can only go up to 128 bc of shared memory capacity in fill_offset prefix scan function...
@@ -168,11 +159,6 @@ int main() {
   
   fill_bucket<<<(n+range-1)/range, range, range*sizeof(int)>>>(n, bucket, key);
   cudaDeviceSynchronize();
-
-  // printf("\nTASK 1 GPU = %f", (float) (std::chrono::steady_clock::now() - start).count());
-
-
-  // start = std::chrono::steady_clock::now();
   
   fill_offset<<<1, range, 2*range>>>(range, bucket, offset);
   cudaDeviceSynchronize();
@@ -181,15 +167,12 @@ int main() {
   fill_key<<<(range+31)/32, 32>>>(range, bucket, offset, key);
   cudaDeviceSynchronize();
 
-  // printf("\nTASK 2 GPU = %f", (float) (std::chrono::steady_clock::now() - start).count());
-
-
   // printf("\noutput gpu = \n KEY SORTED = ");
   // print_vec(key, n);
   // printf("\n");
 
   float GPU = (std::chrono::steady_clock::now() - start).count();
 
-  printf("Time taken: for array of size = %i with range = %i  \n >> CPU: %f  \n >> GPU: %f", n, range,  CPU, GPU);
+  printf("Time taken [written & tested on an NVIDIA RTX 3050]: for array of size = %i with range = %i  \n >> CPU: %f  \n >> GPU: %f", n, range,  CPU, GPU);
 
 }
