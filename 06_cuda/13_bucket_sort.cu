@@ -88,14 +88,8 @@ void bucket_sort_CPU(int *key, int *output, int n, int range)
     bucket[key[i]]++;
   }
 
-  // printf("bucket = ");
-  // for (int i =0; i< range; ++i)
-  // {
-  //   printf("%i ", bucket[i]);
-  // }
-
   std::chrono::duration<double> task1 =  std::chrono::high_resolution_clock::now() - start;
-  printf("\nFILLING BUCKET TASK executed on CPU in = %f\n", task1.count());
+  printf("\nFILLING BUCKET TASK executed on CPU in = %f", task1.count());
 
   start = std::chrono::high_resolution_clock::now();
 
@@ -106,7 +100,7 @@ void bucket_sort_CPU(int *key, int *output, int n, int range)
   }
 
   std::chrono::duration<double> task2 = std::chrono::high_resolution_clock::now() - start;
-  printf("\nSORTING KEYS WITH BUCKET TASK executed on CPU in = %f", task2.count());
+  printf("\nSORTING KEYS WITH BUCKET TASK executed on CPU in = %f\n", task2.count());
 
 
 }
@@ -150,44 +144,50 @@ int main() {
   // CPU
 
   std::vector<int> outputCPU(n);
-
-
   auto start = std::chrono::high_resolution_clock::now();
-
   bucket_sort_CPU(key, outputCPU.data(), n, range);
-
-  // printf("\nFILLING BUCKET TASK executed on GPU in = %f", task1.count());
   std::chrono::duration<double>  CPU = (std::chrono::high_resolution_clock::now() - start);
 
 
-  // cudaStream_t streams[NUM_STREAMS];
 
+  // GPU
 
-  // for (int s=0; s<NUM_STREAMS; ++s)
-  // {
-  //   cudaStreamCreate(&streams[s]);
-
-  // }
+  /*
+  STEP 1: build the bucket array
+  */
   start = std::chrono::high_resolution_clock::now();
+  
   fill_bucket<<<(n+range-1)/range, range, range*sizeof(int)>>>(n, bucket, key);
   cudaDeviceSynchronize();
-
-  
   
   std::chrono::duration<double> task1 = std::chrono::high_resolution_clock::now() - start;
   printf("\nFILLING BUCKET TASK executed on GPU in = %f", task1.count());
   
+
+  /*
+  STEP 2: sort the key array according to the bucket array. an offset array
+  is built in the first kernel using prefix scan sum pattern.
+  */
+
   auto start2 = std::chrono::high_resolution_clock::now();
   
   fill_offset<<<1, range, 2*range*sizeof(int)>>>(range, bucket, offset, key);
   cudaDeviceSynchronize();
-
 
   fill_key<<<(range+31)/32, 32>>>(range, bucket, offset, key);
   cudaDeviceSynchronize();
 
   std::chrono::duration<double> task2 = std::chrono::high_resolution_clock::now() - start2;
   printf("\nSORTING KEYS WITH BUCKET TASK executed on GPU in = %f", task2.count());
+
+  std::chrono::duration<double>  GPU = (std::chrono::high_resolution_clock::now() - start);
+  printf("\n\n >> Time taken for array of size = %i with range = %i (SECONDS)  \n >> CPU: %f  \n >> GPU: %f (speedup by a factor x%f)", n, range,  CPU.count(), GPU.count(), CPU.count()/GPU.count());
+
+
+  /*
+  PRINTING TO CONFIRM PROPER SORTING OF THE KEY ARRAY
+  */
+
   // printf("\noutput gpu = \n bucket SORTED = ");
   // print_vec(bucket, range);
   // printf("\n");
@@ -198,10 +198,6 @@ int main() {
   // print_vec(key, n);
   // printf("\n");
 
-  std::chrono::duration<double>  GPU = (std::chrono::high_resolution_clock::now() - start);
-
-
-  printf("\n\n >> Time taken for array of size = %i with range = %i (SECONDS)  \n >> CPU: %f  \n >> GPU: %f (speedup by a factor x%f)", n, range,  CPU.count(), GPU.count(), CPU.count()/GPU.count());
 
   cudaFree(offset);
   cudaFree(bucket);

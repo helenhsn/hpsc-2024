@@ -3,6 +3,15 @@
 #include <vector>
 #include <chrono>
 
+
+
+/**
+ * 
+ * CUDA VERSION OF THE BUCKET SORT WITH CUDA STREAMS
+ * Not worth it because gpu is already filled when running the fill bucket kernel...
+ * 
+*/
+
 #define NUM_STREAMS 10
 
 void print_vec(int *vec, int size);
@@ -181,7 +190,10 @@ int main() {
   for (int i=0; i<NUM_STREAMS; ++i)
   {
     cudaStreamCreate(&streams[i]);
-    
+  }
+
+  for (int i=0; i<NUM_STREAMS; ++i)
+  {
     int offsetStream = i*streamSize;
     cudaMemcpyAsync(
       d_key + offsetStream, 
@@ -189,7 +201,15 @@ int main() {
       streamSizeBytes, 
       cudaMemcpyHostToDevice, 
       streams[i]);
+  }
+  for (int i=0; i<NUM_STREAMS; ++i)
+  {
+    int offsetStream = i*streamSize;
     fill_bucket<<<gridSize, blockSize, blockSize*sizeof(int), streams[i]>>>(n, d_bucket, d_key, offsetStream);
+  }
+  for (int i=0; i<NUM_STREAMS; ++i)
+  {
+    int offsetStream = i*streamSize;
     cudaMemcpyAsync(
       h_key + offsetStream, 
       d_key + offsetStream, 
@@ -221,7 +241,7 @@ int main() {
   printf("\nSORTING KEYS WITH BUCKET TASK executed on GPU in = %f", task2.count());
 
   std::chrono::duration<double>  GPU = (std::chrono::high_resolution_clock::now() - start);
-  printf("\n\n >> Time taken for array of size = %i (2**28) with range = %i (SECONDS)  \n >> CPU: %f  \n >> GPU: %f (speedup by a factor x%f)", n, range,  CPU.count(), GPU.count(), CPU.count()/GPU.count());
+  printf("\n\n >> Time taken for array of size = %i with range = %i (SECONDS)  \n >> CPU: %f  \n >> GPU: %f (speedup by a factor x%f)", n, range,  CPU.count(), GPU.count(), CPU.count()/GPU.count());
 
 
 
