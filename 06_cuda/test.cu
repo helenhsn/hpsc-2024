@@ -124,11 +124,11 @@ void print_vec(int *vec, int size)
 
 
 int main() {
-    int n = 134217728;
+    int n = 268435456;
 
   // the bigger the range, the more the faster the CUDA version compared to the sequential version.
   // but cannot increase it too much because of hardware limitations.
-  int range = 512;
+  int range = 1024;
 
 
   // initializing all the buffers

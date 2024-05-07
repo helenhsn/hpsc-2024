@@ -3,7 +3,7 @@
 #include <vector>
 #include <chrono>
 
-#define NUM_STREAMS 6
+#define NUM_STREAMS 10
 
 void print_vec(int *vec, int size);
 
@@ -119,11 +119,11 @@ void print_vec(int *vec, int size)
 
 
 int main() {
-  int n = 134217728;
+  int n = 268435456;
 
   // the bigger the range, the more the faster the CUDA version compared to the sequential version.
   // but cannot increase it too much because of hardware limitations.
-  int range = 512;
+  int range = 1024;
 
   // initializing all the buffers
   int *h_key = (int *) calloc(n, sizeof(int));
@@ -176,12 +176,13 @@ int main() {
   int streamSizeBytes = streamSize*sizeof(int);
   int blockSize = range;
   int gridSize = (streamSize)/blockSize;
-
+  
 
   for (int i=0; i<NUM_STREAMS; ++i)
   {
-    int offsetStream = i*streamSize;
     cudaStreamCreate(&streams[i]);
+    
+    int offsetStream = i*streamSize;
     cudaMemcpyAsync(
       d_key + offsetStream, 
       h_key + offsetStream, 
@@ -220,7 +221,7 @@ int main() {
   printf("\nSORTING KEYS WITH BUCKET TASK executed on GPU in = %f", task2.count());
 
   std::chrono::duration<double>  GPU = (std::chrono::high_resolution_clock::now() - start);
-  printf("\n\n >> Time taken for array of size = %i with range = %i (SECONDS)  \n >> CPU: %f  \n >> GPU: %f (speedup by a factor x%f)", n, range,  CPU.count(), GPU.count(), CPU.count()/GPU.count());
+  printf("\n\n >> Time taken for array of size = %i (2**28) with range = %i (SECONDS)  \n >> CPU: %f  \n >> GPU: %f (speedup by a factor x%f)", n, range,  CPU.count(), GPU.count(), CPU.count()/GPU.count());
 
 
 
