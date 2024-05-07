@@ -3,6 +3,8 @@
 #include <vector>
 #include <chrono>
 
+// #define NUM_STREAMS 0
+
 void print_vec(int *vec, int size);
 
 __global__ void fill_bucket(int maxTid, int *bucket, int *keys)
@@ -12,14 +14,17 @@ __global__ void fill_bucket(int maxTid, int *bucket, int *keys)
   extern __shared__ int temp[];
   temp[threadIdx.x] = 0;
   __syncthreads();
+  // printf("loctid=%i", threadIdx.x);
   // printf("ok, blockIdx=%i, tid = %i && threadIDx.X = %i\n", blockIdx.x, tid, threadIdx.x);
 
   // filling the bucket -> each thread can process several elements in the key array
 
+  int offset = gridDim.x*blockDim.x;
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
-  if (tid < maxTid)
+  while (tid < maxTid)
   {
     atomicAdd(temp +  keys[tid], 1);
+    tid+=offset;
   }
   __syncthreads();
 
@@ -38,16 +43,16 @@ __global__ void fill_offset(int range, int *bucket, int *offset, int *key)
   __syncthreads();
 
   int outbuff = 0;
-
-  for (int k=1; k<range; k<<=1)
+  for (int k=1; k<range; k=k<<1)
   {
     // swap in and out buffers
     outbuff = 1 - outbuff;
     int outTID = (1 - outbuff)*range+loc_tid;
-    int res = (loc_tid >= k) ? 1 : 0;
+    int res = (loc_tid >= k) ? temp[outTID-k] : 0;
 
-    temp[outbuff*range+loc_tid] = temp[outTID] + res * temp[outTID-k];
+    temp[outbuff*range+loc_tid] = temp[outTID] + res;
     __syncthreads();
+
   }
 
   offset[loc_tid] = temp[outbuff*range+loc_tid];
@@ -83,6 +88,12 @@ void bucket_sort_CPU(int *key, int *output, int n, int range)
     bucket[key[i]]++;
   }
 
+  // printf("bucket = ");
+  // for (int i =0; i< range; ++i)
+  // {
+  //   printf("%i ", bucket[i]);
+  // }
+
   std::chrono::duration<double> task1 =  std::chrono::high_resolution_clock::now() - start;
   printf("\nFILLING BUCKET TASK executed on CPU in = %f\n", task1.count());
 
@@ -113,11 +124,11 @@ void print_vec(int *vec, int size)
 
 
 int main() {
-  int n = 10000000;
+  int n = 250000000;
 
-  // BEWARE !!! 
-  // range can only go up to 128 bc of shared memory capacity in fill_offset prefix scan function...
-  int range = 1024;
+  // the bigger the range, the more the faster the CUDA version compared to the sequential version.
+  // but cannot increase it too much because of hardware limitations.
+  int range = 512;
 
   // initializing all the buffers
   int *key;
@@ -130,6 +141,7 @@ int main() {
 
   for (int i=0; i<n; i++) {
     key[i] = rand() % range;
+    // printf("%i ", key[i]);
   }
   printf("Key array filled! \n");
 
@@ -147,11 +159,19 @@ int main() {
   std::chrono::duration<double>  CPU = (std::chrono::high_resolution_clock::now() - start);
 
 
-  start = std::chrono::high_resolution_clock::now();
+  // cudaStream_t streams[NUM_STREAMS];
 
-  
+
+  // for (int s=0; s<NUM_STREAMS; ++s)
+  // {
+  //   cudaStreamCreate(&streams[s]);
+
+  // }
   fill_bucket<<<(n+range-1)/range, range, range*sizeof(int)>>>(n, bucket, key);
   cudaDeviceSynchronize();
+
+  start = std::chrono::high_resolution_clock::now();
+  
   
   std::chrono::duration<double> task1 = std::chrono::high_resolution_clock::now() - start;
   printf("\nFILLING BUCKET TASK executed on GPU in = %f", task1.count());
@@ -173,12 +193,16 @@ int main() {
   // printf("\noutput gpu = \n offset SORTED = ");
   // print_vec(offset, range);
   // printf("\n");
-  // printf("\noutput gpu = \n KEY SORTED = ");
+  // printf("\noutput gpu = \n KEY SORTED = \n");
   // print_vec(key, n);
   // printf("\n");
 
   std::chrono::duration<double>  GPU = (std::chrono::high_resolution_clock::now() - start);
 
+
   printf("\n\n >> Time taken for array of size = %i with range = %i (SECONDS)  \n >> CPU: %f  \n >> GPU: %f (speedup by a factor x%f)", n, range,  CPU.count(), GPU.count(), CPU.count()/GPU.count());
 
+  cudaFree(offset);
+  cudaFree(bucket);
+  cudaFree(key);
 }
