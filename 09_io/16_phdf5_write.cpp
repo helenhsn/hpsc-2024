@@ -2,40 +2,45 @@
 #include <cstdio>
 #include <chrono>
 #include <vector>
-#include <hdf5/openmpi/hdf5.h>
-// #include "hdf5.h"
+// #include <hdf5/openmpi/hdf5.h>
+#include "hdf5.h"
 
 using namespace std;
 
 int main (int argc, char** argv) {
-  const int NX = 1000, NY = 1000;
+  const int NX = 10000, NY = 10000;
   hsize_t dim[2] = {2, 2};
   int mpisize, mpirank;
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &mpisize);
   MPI_Comm_rank(MPI_COMM_WORLD, &mpirank);
   assert(mpisize == dim[0]*dim[1]);
+  
   hsize_t N[2] = {NX, NY};
   hsize_t Nlocal[2] = {NX/dim[0], NY/dim[1]};
-  hsize_t block[2] = {NX/(2*dim[0]), NY/(2*dim[1])};
-  hsize_t offset[2] = {(mpirank / dim[0] *block[0]), ((mpirank % dim[0]) * block[1])};
-  printf("Rank %i, offset = %i %i, nlocal = %i %i, block = %i %i", mpirank, offset[0], offset[1], Nlocal[0], Nlocal[1], block[0], block[1]);
   
-  hsize_t count[2] = {2,2};
-  hsize_t stride[2] = {2,2};
+  hsize_t block[2] = {Nlocal[0]/2, Nlocal[1]/2};
+  hsize_t offset[2] = {mpirank / dim[0] * block[0], (mpirank % dim[0])*block[1]};
+  hsize_t count[2] = {2, 2};
+  hsize_t stride[2] = {block[0]*2, block[1]*2};
+  
+  printf("Rank %i, offset = %i %i, nlocal = %i %i, block = %i %i", mpirank, (int) offset[0], (int) offset[1], (int) Nlocal[0], (int) Nlocal[1], (int) block[0], (int) block[1]);
+  
   vector<int> buffer(Nlocal[0]*Nlocal[1], mpirank);
   hid_t plist = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_fapl_mpio(plist, MPI_COMM_WORLD, MPI_INFO_NULL);
+
   hid_t file = H5Fcreate("data.h5", H5F_ACC_TRUNC, H5P_DEFAULT, plist);
   hid_t globalspace = H5Screate_simple(2, N, NULL);
   hid_t localspace = H5Screate_simple(2, Nlocal, NULL);
   hid_t dataset = H5Dcreate(file, "dataset", H5T_NATIVE_INT, globalspace,
 			    H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Sselect_hyperslab(globalspace, H5S_SELECT_SET, offset, stride, count, Nlocal);
+  H5Sselect_hyperslab(globalspace, H5S_SELECT_SET, offset, stride, count, block);
   H5Pclose(plist);
   plist = H5Pcreate(H5P_DATASET_XFER);
   H5Pset_dxpl_mpio(plist, H5FD_MPIO_COLLECTIVE);
   auto tic = chrono::steady_clock::now();
+  printf("rank = %i\n", mpirank);
   H5Dwrite(dataset, H5T_NATIVE_INT, localspace, globalspace, plist, &buffer[0]);
   auto toc = chrono::steady_clock::now();
   H5Dclose(dataset);
