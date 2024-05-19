@@ -23,9 +23,7 @@ int main (int argc, char** argv) {
   hsize_t offset[2] = {mpirank / dim[0] * block[0], (mpirank % dim[0])*block[1]};
   hsize_t count[2] = {2, 2};
   hsize_t stride[2] = {block[0]*2, block[1]*2};
-  
-  printf("Rank %i, offset = %i %i, nlocal = %i %i, block = %i %i", mpirank, (int) offset[0], (int) offset[1], (int) Nlocal[0], (int) Nlocal[1], (int) block[0], (int) block[1]);
-  
+    
   vector<int> buffer(Nlocal[0]*Nlocal[1], mpirank);
   hid_t plist = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_fapl_mpio(plist, MPI_COMM_WORLD, MPI_INFO_NULL);
