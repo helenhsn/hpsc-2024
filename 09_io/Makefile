@@ -32,5 +32,6 @@
 	g++ 15_hdf5_read.cpp -lhdf5
 16_phdf5_write: 16_phdf5_write.cpp
 	mpicxx 16_phdf5_write.cpp -lhdf5
+# mpicxx 16_phdf5_write.cpp -lhdf5_openmpi on my pc
 17_phdf5_read: 17_phdf5_read.cpp
 	mpicxx 17_phdf5_read.cpp -lhdf5
