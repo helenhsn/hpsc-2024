@@ -5,6 +5,10 @@
 #include <iostream>
 #include <chrono>
 
+/**
+ * NAVIER STOKES COMPUTATIONAL MODULE
+ * using GLOBAL MEMORY ONLY
+*/
 
 using namespace std;
 typedef vector<vector<float>> matrix;
@@ -263,8 +267,9 @@ __global__ void init_arrays(
 }
 
 int main() {
-    auto start = std::chrono::high_resolution_clock::now();
-  float upP = 0.0;
+  printf("NAVIER STOKES FOR A 41x41 GRID -------->> EXECUTE: 41x41_plot.py // COMPARISON: 41x41_cavity.py\n");
+
+  auto start = std::chrono::high_resolution_clock::now();
 
 
   int nx = 41;
@@ -322,7 +327,6 @@ int main() {
     );
 
     cudaErrorCheck(cudaDeviceSynchronize());
-    auto t = std::chrono::high_resolution_clock::now();
 
     for (int it =0; it<nit; ++it)
     {
@@ -360,8 +364,6 @@ int main() {
       );
       cudaErrorCheck(cudaDeviceSynchronize());
     }
-     std::chrono::duration<double> tot = std::chrono::high_resolution_clock::now() - t;
-    upP+= tot.count();
 
 
     copyUnVn<<<dimGrid, dimBlock>>>(
@@ -429,8 +431,7 @@ int main() {
     }
   }
   std::chrono::duration<double> total = std::chrono::high_resolution_clock::now() - start;
-    printf("\nSIMULATION executed on GPU in = %f\n", total.count());
-    printf("\n update of P in = %f\n", upP);
+  printf("\nSIMULATION executed on GPU in = %f\n", total.count());
 
   ufile.close();
   vfile.close();
