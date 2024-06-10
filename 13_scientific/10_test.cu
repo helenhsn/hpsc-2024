@@ -367,6 +367,8 @@ int main() {
     );
     cudaErrorCheck(cudaDeviceSynchronize());
 
+    if (n==400) printf("\nn = %i res = %.10f", n, u[25*nx+25]);
+
     if (n%10==0) {
       for (int j=0; j<ny; j++)
         for (int i=0; i<nx; i++)
