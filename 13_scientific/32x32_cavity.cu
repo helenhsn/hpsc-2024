@@ -73,12 +73,12 @@ __global__ void updateUV(
       float v_j_im1 = u_v_n[j_im1+N];
 
       newU = u_ij - u_ij * dt / dx * (u_ij - u_j_im1)
-                    - u_ij * dt / dy * (u_ij - u_jm1_i)
+                    - v_ij * dt / dy * (u_ij - u_jm1_i)
                     - dt / (2 * rho * dx) * (p[j*nx+i+1] - p[j*nx+i-1])
                     + nu * dt / dx2 * (u_j_ip1 - 2 * u_ij + u_j_im1)
                     + nu * dt / dy2 * (u_jp1_i - 2 * u_ij + u_jm1_i);
 
-      newV = v_ij - v_ij * dt / dx * (v_ij - v_j_im1)
+      newV = v_ij - u_ij * dt / dx * (v_ij - v_j_im1)
                     - v_ij * dt / dy * (v_ij - v_jm1_i)
                     - dt / (2 * rho * dy) * (p[(j+1)*nx+i] - p[(j-1)*nx+i])
                     + nu * dt / dx2 * (v_j_ip1 - 2 * v_ij + v_j_im1)
