@@ -50,14 +50,14 @@ int main() {
 
     for (int j=1; j<ny-1; j++) {
       for (int i=1; i<nx-1; i++) {
-        float tempU = (u[j][i+1] - u[j][i-1]) / (2 * dx);
+        float tempU = (u[j][i+1] - u[j][i-1]) / (2.0 * dx);
         float tempU_sq = tempU*tempU;
-        float tempV = (v[j+1][i] - v[j-1][i]) / (2 * dy);
+        float tempV = (v[j+1][i] - v[j-1][i]) / (2.0 * dy);
         float tempV_sq = tempV*tempV;
         b[j][i] = rho * (
-                  1 / dt * (tempU+ tempV) 
+                  1.0 / dt * (tempU+ tempV) 
                   - tempU_sq
-                  - ((u[j+1][i] - u[j-1][i])*(v[j][i+1] - v[j][i-1]) / (2 * dx * dy)) 
+                  - ((u[j+1][i] - u[j-1][i])*(v[j][i+1] - v[j][i-1]) / (2.0 * dx * dy)) 
                   - tempV_sq
         );
       }
@@ -65,18 +65,20 @@ int main() {
     for (int it=0; it<nit; it++) {
 
       // copy p into pn
-      for (int j=0; j<ny; j++)
-        for (int i=0; i<nx; i++)
+      for (int j=0; j<ny; j++) {
+        for (int i=0; i<nx; i++) {
 	        pn[j][i] = p[j][i];
+        }
+      }
+
 
 
       for (int j=1; j<ny-1; j++) {
         for (int i=1; i<nx-1; i++) {
-	        p[j][i] = (
-                    dy2 * (pn[j][i+1] + pn[j][i-1]) 
+	        p[j][i] = (dy2 * (pn[j][i+1] + pn[j][i-1]) 
                     + dx2 * (pn[j+1][i] + pn[j-1][i]) 
-                    - b[j][i] * dx2 * dy2/ (2 * (dx2 + dy2))
-                    );
+                    - b[j][i] * dx2 * dy2)/ (2 * (dx2 + dy2))
+                    ;
 	      }
       }
       for (int j=0; j<ny; j++) {
